@@ -1,4 +1,11 @@
-.venv
-/server/.env
-__pycache__
+.env
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+server/uploaded_docs/
 test.py

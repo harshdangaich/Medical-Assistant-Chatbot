@@ -3,13 +3,19 @@ from fastapi.responses import JSONResponse
 from modules.llm import get_llm_chain
 from modules.query_handlers import query_chain
 from langchain_core.documents import Document
-from langchain.schema import BaseRetriever
+from langchain_core.retrievers import BaseRetriever
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from pinecone import Pinecone
 from pydantic import Field
+from pathlib import Path
 from typing import List, Optional
 from logger import logger
+from dotenv import load_dotenv
 import os
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent.parent / ".env")
+
+PINECONE_INDEX_NAME = "medicalindex"
 
 router=APIRouter()
 
@@ -20,8 +26,11 @@ async def ask_question(question: str = Form(...)):
 
         # Embed model + Pinecone setup
         pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
-        index = pc.Index(os.environ["PINECONE_INDEX_NAME"])
-        embed_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        index = pc.Index(PINECONE_INDEX_NAME)
+        embed_model = GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001",
+            google_api_key=os.environ.get("GOOGLE_API_KEY")
+        )
         embedded_query = embed_model.embed_query(question)
         res = index.query(vector=embedded_query, top_k=3, include_metadata=True)
 
@@ -33,17 +42,12 @@ async def ask_question(question: str = Form(...)):
         ]
 
         class SimpleRetriever(BaseRetriever):
-            tags: Optional[List[str]] = Field(default_factory=list)
-            metadata: Optional[dict] = Field(default_factory=dict)
-
-            def __init__(self, documents: List[Document]):
-                super().__init__()
-                self._docs = documents
+            docs: List[Document]
 
             def _get_relevant_documents(self, query: str) -> List[Document]:
-                return self._docs
+                return self.docs
 
-        retriever = SimpleRetriever(docs)
+        retriever = SimpleRetriever(docs=docs)
         chain = get_llm_chain(retriever)
         result = query_chain(chain, question)
 

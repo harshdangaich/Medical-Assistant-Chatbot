@@ -1,0 +1,29 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: medical-assistant-server
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploaded_docs:/app/uploaded_docs
+    restart: unless-stopped
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: medical-assistant-client
+    environment:
+      API_URL: http://server:8000
+    depends_on:
+      - server
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+volumes:
+  uploaded_docs:

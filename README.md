@@ -178,6 +178,41 @@ $ streamlit run app.py
 
 ---
 
+## 🐳 Docker Setup
+
+Run both the FastAPI server and Streamlit client with Docker Compose:
+
+```bash
+cd medicalAssistant
+docker compose up --build
+```
+
+App URLs:
+
+- Streamlit UI: `http://localhost:8501`
+- FastAPI API: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+
+Notes:
+
+- Keep your API keys in the project root `.env` file.
+- Uploaded PDFs are stored in a Docker volume mounted at `/app/uploaded_docs`.
+- Inside Docker, the client talks to the backend using `http://server:8000`.
+
+To stop the stack:
+
+```bash
+docker compose down
+```
+
+To stop and remove the uploaded PDF volume too:
+
+```bash
+docker compose down -v
+```
+
+---
+
 ## 🌐 Deployment
 
 - Hosted on [Render](https://render.com)
